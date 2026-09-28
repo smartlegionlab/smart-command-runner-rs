@@ -1,12 +1,11 @@
 use clap::Parser;
-use indicatif::{ProgressBar, ProgressStyle};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::fs::{self, File, OpenOptions};
 use std::io::{BufRead, IsTerminal, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
-use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 const APP_NAME: &str = "Smart Command Runner";
 const BIN_NAME: &str = "cmdrun";
@@ -306,7 +305,7 @@ fn run_command(sh: &Path, command: &str) -> Result<(u64, String), String> {
 
 fn open_log(path: &Path) -> Option<File> {
     if let Some(parent) = path.parent() {
-        if let Err(_) = fs::create_dir_all(parent) {
+        if fs::create_dir_all(parent).is_err() {
             return None;
         }
     }
@@ -349,29 +348,6 @@ fn execute(cli: &Cli, config: &Config, blocks: &[String], log: &mut Option<File>
     let mut summary = RunSummary::default();
     let mut all_blocks = false;
     let mut all_commands = false;
-    let mut total_commands: u64 = blocks
-        .iter()
-        .map(|n| {
-            config
-                .blocks
-                .get(n)
-                .map(|b| b.commands.len() as u64)
-                .unwrap_or(0)
-        })
-        .sum();
-
-    let pb = if cli.interactive_block || cli.interactive_command {
-        None
-    } else {
-        let pb = ProgressBar::new(total_commands);
-        pb.set_style(
-            ProgressStyle::with_template("{spinner:.green} [{bar:40.cyan/blue}] {pos}/{len}")
-                .unwrap()
-                .progress_chars("#>-"),
-        );
-        pb.enable_steady_tick(Duration::from_millis(100));
-        Some(pb)
-    };
 
     for block_name in blocks {
         let block = match config.blocks.get(block_name) {
@@ -385,9 +361,6 @@ fn execute(cli: &Cli, config: &Config, blocks: &[String], log: &mut Option<File>
                 ConfirmChoice::No => {
                     summary.blocks_skipped += 1;
                     summary.commands_skipped += block.commands.len() as u64;
-                    if let Some(ref pb) = pb {
-                        pb.inc(block.commands.len() as u64);
-                    }
                     continue;
                 }
                 ConfirmChoice::All => {
@@ -401,17 +374,15 @@ fn execute(cli: &Cli, config: &Config, blocks: &[String], log: &mut Option<File>
         }
 
         let mut block_commands_ok: u64 = 0;
+        let total_in_block = block.commands.len();
         let block_start = Instant::now();
 
         for (i, command) in block.commands.iter().enumerate() {
             if cli.interactive_command && !all_commands {
-                match ask_command(i + 1, block.commands.len(), block_name, command) {
+                match ask_command(i + 1, total_in_block, block_name, command) {
                     ConfirmChoice::Yes => {}
                     ConfirmChoice::No => {
                         summary.commands_skipped += 1;
-                        if let Some(ref pb) = pb {
-                            pb.inc(1);
-                        }
                         continue;
                     }
                     ConfirmChoice::All => {
@@ -419,30 +390,39 @@ fn execute(cli: &Cli, config: &Config, blocks: &[String], log: &mut Option<File>
                     }
                     ConfirmChoice::Quit => {
                         eprintln!("Interrupted by user.");
-                        if let Some(ref pb) = pb {
-                            pb.finish_and_clear();
-                        }
                         summary.blocks_run += 1;
                         return summary;
                     }
                 }
             }
 
+            let pos = i + 1;
             let ts = iso_timestamp();
-            log_line(log, &format!("[{}] [{}] RUN: {}", ts, block_name, command));
+            log_line(
+                log,
+                &format!(
+                    "[{}] [{}] [{}/{}] RUN: {}",
+                    ts, block_name, pos, total_in_block, command
+                ),
+            );
 
-            println!("[{}] $ {}", block_name, command);
+            println!("[{}] [{}/{}] $ {}", block_name, pos, total_in_block, command);
             let cmd_start = Instant::now();
             match run_command(&cli.sh, command) {
                 Ok((_, _out)) => {
                     let elapsed = cmd_start.elapsed().as_secs_f64();
-                    println!("[{}] OK ({:.2}s)", block_name, elapsed);
+                    println!(
+                        "[{}] [{}/{}] OK ({:.2}s)",
+                        block_name, pos, total_in_block, elapsed
+                    );
                     log_line(
                         log,
                         &format!(
-                            "[{}] [{}] OK ({:.2}s)",
+                            "[{}] [{}] [{}/{}] OK ({:.2}s)",
                             iso_timestamp(),
                             block_name,
+                            pos,
+                            total_in_block,
                             elapsed
                         ),
                     );
@@ -451,13 +431,18 @@ fn execute(cli: &Cli, config: &Config, blocks: &[String], log: &mut Option<File>
                 }
                 Err(e) => {
                     let elapsed = cmd_start.elapsed().as_secs_f64();
-                    eprintln!("[{}] FAIL ({:.2}s): {}", block_name, elapsed, e);
+                    eprintln!(
+                        "[{}] [{}/{}] FAIL ({:.2}s): {}",
+                        block_name, pos, total_in_block, elapsed, e
+                    );
                     log_line(
                         log,
                         &format!(
-                            "[{}] [{}] FAIL ({:.2}s): {}",
+                            "[{}] [{}] [{}/{}] FAIL ({:.2}s): {}",
                             iso_timestamp(),
                             block_name,
+                            pos,
+                            total_in_block,
                             elapsed,
                             e
                         ),
@@ -467,10 +452,6 @@ fn execute(cli: &Cli, config: &Config, blocks: &[String], log: &mut Option<File>
                         .errors
                         .push(format!("[{}] {}: {}", block_name, command, e));
                 }
-            }
-
-            if let Some(ref pb) = pb {
-                pb.inc(1);
             }
         }
 
@@ -492,13 +473,6 @@ fn execute(cli: &Cli, config: &Config, blocks: &[String], log: &mut Option<File>
         );
     }
 
-    if let Some(pb) = pb {
-        pb.finish_and_clear();
-    }
-
-    let _ = total_commands;
-    total_commands = 0;
-    let _ = total_commands;
     summary
 }
 
