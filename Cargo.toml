@@ -1,6 +1,6 @@
 [package]
 name = "smart_command_runner"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Alexander Suvorov <smartlegionlab@gmail.com>"]
 description = "Run grouped shell commands from a TOML file with blocks, confirmation modes, and logging"
