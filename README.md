@@ -122,7 +122,7 @@ commands = [
 - Per-command output with exit status and timing
 - Log file with timestamps (default: `~/.local/share/cmdrun/cmdrun.log`)
 - `--no-log` to disable logging
-- Exit codes of individual commands are recorded in the log
+- Non-zero exit codes of failed commands are recorded in the log
 - Continues on errors — reports them at the end
 
 ---
@@ -325,16 +325,22 @@ each run.
 
 ```
 [2026-09-28T10:23:45Z] === cmdrun START file=linux-setup.toml blocks=base,manjaro
-[2026-09-28T10:23:45Z] [base] RUN: sudo apt update -y
-[2026-09-28T10:23:47Z] [base] OK (2.10s)
-[2026-09-28T10:23:47Z] [base] RUN: sudo apt install -y git curl wget htop neovim
-[2026-09-28T10:23:52Z] [base] OK (4.71s)
+[2026-09-28T10:23:45Z] [base] [1/2] RUN: sudo apt update -y
+[2026-09-28T10:23:47Z] [base] [1/2] OK (2.10s)
+[2026-09-28T10:23:47Z] [base] [2/2] RUN: sudo apt install -y git curl wget htop neovim
+[2026-09-28T10:23:52Z] [base] [2/2] OK (4.71s)
 [2026-09-28T10:23:52Z] [base] BLOCK DONE (6.81s)
-[2026-09-28T10:23:52Z] [manjaro] RUN: sudo pacman -Syu --noconfirm
-[2026-09-28T10:23:59Z] [manjaro] OK (7.12s)
+[2026-09-28T10:23:52Z] [manjaro] [1/2] RUN: sudo pacman -Syu --noconfirm
+[2026-09-28T10:23:59Z] [manjaro] [1/2] OK (7.12s)
+[2026-09-28T10:23:59Z] [manjaro] [2/2] RUN: some-missing-command
+[2026-09-28T10:23:59Z] [manjaro] [2/2] FAIL (0.00s): exit 127: sh: some-missing-command: not found
 [2026-09-28T10:23:59Z] [manjaro] BLOCK DONE (7.12s)
-[2026-09-28T10:23:59Z] === cmdrun END run=3 skipped=0 failed=0
+[2026-09-28T10:23:59Z] === cmdrun END run=3 skipped=0 failed=1
 ```
+
+Successful commands are logged as `OK (Ns)`. Failed commands are logged as
+`FAIL (Ns): exit N: <output>`. Non-zero exit codes are preserved. A failed
+command does not stop the block — see `## Concepts → Rules`.
 
 ---
 
