@@ -1,0 +1,23 @@
+[package]
+name = "smart_command_runner"
+version = "0.1.0"
+edition = "2021"
+authors = ["Alexander Suvorov <smartlegionlab>"]
+description = "Run grouped shell commands from a TOML file with blocks, confirmation modes, and logging"
+repository = "https://github.com/smartlegionlab/smart-command-runner-rs"
+license = "BSD-3-Clause"
+
+[[bin]]
+name = "cmdrun"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4.5", features = ["derive"] }
+indicatif = "0.17"
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
+
+[dev-dependencies]
+assert_cmd = "2"
+predicates = "3"
+tempfile = "3"
