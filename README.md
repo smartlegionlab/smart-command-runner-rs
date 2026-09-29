@@ -129,7 +129,7 @@ commands = [
 
 ## Installation
 
-Requires Rust 1.70 or newer.
+Requires Rust 1.85 or newer (edition 2024).
 
 ### Build from source
 
