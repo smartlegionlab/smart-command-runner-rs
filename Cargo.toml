@@ -1,12 +1,16 @@
 [package]
-name = "smart_command_runner"
-version = "0.1.3"
+name = "smart-command-runner"
+version = "1.0.0"
 edition = "2024"
 rust-version = "1.85"
 authors = ["Alexander Suvorov <smartlegionlab@gmail.com>"]
 description = "Run grouped shell commands from a TOML file with blocks, confirmation modes, and logging"
 repository = "https://github.com/smartlegionlab/smart-command-runner-rs"
 license = "BSD-3-Clause"
+readme = "README.md"
+keywords = ["cli", "command-runner", "toml", "automation", "shell"]
+categories = ["command-line-utilities", "development-tools"]
+exclude = [".github/", "tests/"]
 
 [[bin]]
 name = "cmdrun"
@@ -21,3 +25,10 @@ toml = "0.8"
 assert_cmd = "2"
 predicates = "3"
 tempfile = "3"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
