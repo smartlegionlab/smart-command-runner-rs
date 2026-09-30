@@ -4,11 +4,16 @@
 
 ---
 
+[![Crates.io](https://img.shields.io/crates/v/smart-command-runner)](https://crates.io/crates/smart-command-runner)
+[![Documentation](https://docs.rs/smart-command-runner/badge.svg)](https://docs.rs/smart-command-runner)
 [![GitHub top language](https://img.shields.io/github/languages/top/smartlegionlab/smart-command-runner-rs)](https://github.com/smartlegionlab/smart-command-runner-rs)
 [![GitHub license](https://img.shields.io/github/license/smartlegionlab/smart-command-runner-rs)](https://github.com/smartlegionlab/smart-command-runner-rs/blob/master/LICENSE)
 [![GitHub release](https://img.shields.io/github/v/release/smartlegionlab/smart-command-runner-rs)](https://github.com/smartlegionlab/smart-command-runner-rs/)
 [![GitHub stars](https://img.shields.io/github/stars/smartlegionlab/smart-command-runner-rs?style=social)](https://github.com/smartlegionlab/smart-command-runner-rs/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/smartlegionlab/smart-command-runner-rs?style=social)](https://github.com/smartlegionlab/smart-command-runner-rs/network/members)
+[![Crates.io Downloads](https://img.shields.io/crates/d/smart-command-runner)](https://crates.io/crates/smart-command-runner)
+[![Crates.io Downloads (year)](https://img.shields.io/crates/dy/smart-command-runner)](https://crates.io/crates/smart-command-runner)
+[![Crates.io Downloads (month)](https://img.shields.io/crates/dm/smart-command-runner)](https://crates.io/crates/smart-command-runner)
 
 ---
 
